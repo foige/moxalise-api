@@ -1,14 +1,13 @@
 # Moxalise API
 
-A FastAPI application that provides endpoints for interacting with a Google spreadsheet for moxalise.ge.
+A FastAPI application that provides endpoints for collecting and storing volunteer geolocation data for moxalise.ge. The application stores location data from volunteers in a Google Sheet for coordination and management purposes.
 
 ## Features
 
-- Read data from Google Sheets
-- Update data in Google Sheets
-- Append data to Google Sheets
-- Clear data from Google Sheets
-- Get sheet names from a spreadsheet
+- Store browser geolocation data in Google Sheets
+- Timezone-aware timestamps (GMT+4)
+
+> **Note:** Spreadsheet routes are currently disabled. The API focuses exclusively on location data collection.
 
 ## Prerequisites
 
@@ -40,16 +39,9 @@ poetry install
    
    c. Enable the Google Sheets API for your project
    
-   d. Create credentials (OAuth 2.0 Client ID) for a desktop application
-   
-   e. Download the credentials JSON file
-
-4. Create a `credentials` directory in the project root and place your credentials file there:
-
-```bash
-mkdir -p credentials
-# Move your downloaded credentials file to credentials/credentials.json
-```
+   d. Set up Application Default Credentials:
+      - For local development: `gcloud auth application-default login`
+      - For production: Create a service account with appropriate permissions
 
 5. Create a `.env` file based on the provided `.env.example`:
 
@@ -85,21 +77,32 @@ Once the application is running, you can access the API documentation at:
 
 ## API Endpoints
 
+All API endpoints are public and do not require authentication.
+
 ### Health Check
 
 - `GET /`: Check if the API is running
 
-### Spreadsheet Operations
+### Location Operations
 
-- `GET /api/spreadsheet/sheets`: Get all sheet names in the spreadsheet
-- `GET /api/spreadsheet/data`: Get data from a sheet
-- `POST /api/spreadsheet/update`: Update data in a sheet
-- `POST /api/spreadsheet/append`: Append data to a sheet
-- `DELETE /api/spreadsheet/clear`: Clear data from a sheet
+- `POST /api/location/`: Store browser geolocation data
 
-## First-time Authentication
+The location endpoint collects the following data:
+- Geographic coordinates (latitude, longitude)
+- Accuracy of coordinates
+- Optional altitude data
+- Optional speed and heading information
+- Phone number of the volunteer
+- Optional message from the volunteer
+- Timestamp (automatically set to GMT+4 timezone)
 
-When you first run the application, it will attempt to authenticate with Google Sheets API. If you haven't authenticated before, it will open a browser window asking you to authorize the application. After authorization, a token file will be saved in the `credentials` directory for future use.
+> **Note:** Spreadsheet operations are currently disabled. The API code still contains the following endpoints, but they are not accessible:
+> - `GET /api/spreadsheet/sheets`: Get all sheet names in the spreadsheet
+> - `GET /api/spreadsheet/data`: Get data from a sheet
+> - `POST /api/spreadsheet/update`: Update data in a sheet
+> - `POST /api/spreadsheet/append`: Append data to a sheet
+> - `DELETE /api/spreadsheet/clear`: Clear data from a sheet
+
 
 ## Development
 
