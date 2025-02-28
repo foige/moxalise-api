@@ -1,0 +1,31 @@
+[tool.poetry]
+name = "moxalise-api"
+version = "0.1.0"
+description = "API for interacting with Moxalise Google Spreadsheet"
+authors = ["Moxalise Team"]
+readme = "README.md"
+packages = [{include = "moxalise", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = "^0.115.9"
+uvicorn = "^0.34.0"
+pydantic = "^2.10.6"
+python-dotenv = "^1.0.1"
+google-auth = "^2.38.0"
+google-auth-oauthlib = "^1.2.1"
+google-auth-httplib2 = "^0.2.0"
+google-api-python-client = "^2.162.0"
+httpx = "^0.28.1"
+pydantic-settings = "^2.8.1"
+bleach = "^6.2.0"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.4"
+pytest-cov = "^6.0.0"
+httpx = "^0.28.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
