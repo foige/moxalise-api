@@ -32,16 +32,16 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
 
 gcloud projects add-iam-policy-binding $PROJECT_ID \
   --member="serviceAccount:github-actions-deployer@$PROJECT_ID.iam.gserviceaccount.com" \
-  --role="roles/storage.admin"
+  --role="roles/iam.serviceAccountUser"
 
 gcloud projects add-iam-policy-binding $PROJECT_ID \
   --member="serviceAccount:github-actions-deployer@$PROJECT_ID.iam.gserviceaccount.com" \
-  --role="roles/iam.serviceAccountUser"
+  --role="roles/iam.workloadIdentityUser"
 
 # Add Artifact Registry permissions (needed for pushing Docker images)
 gcloud projects add-iam-policy-binding $PROJECT_ID \
   --member="serviceAccount:github-actions-deployer@$PROJECT_ID.iam.gserviceaccount.com" \
-  --role="roles/artifactregistry.admin"
+  --role="roles/artifactregistry.writer"
 ```
 
 ### 2. Create and Download Service Account Key
@@ -93,9 +93,10 @@ The GitHub Actions workflow will:
 
 1. Trigger automatically when you push to the `master` branch
 2. Authenticate with Google Cloud using the service account key
-3. Build a Docker image of your application
-4. Push the image to Google Container Registry
-5. Deploy the image to Google Cloud Run
+3. Create Artifact Registry repository if it doesn't exist yet
+4. Build a Docker image of your application
+5. Push the image to Artifact Registry (europe-west3-docker.pkg.dev)
+6. Deploy the image to Google Cloud Run
 
 ### Authentication Flow
 

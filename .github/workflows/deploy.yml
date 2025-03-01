@@ -31,6 +31,19 @@ jobs:
         uses: google-github-actions/setup-gcloud@v1
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
+          
+      - name: Create Artifact Registry Repository
+        run: |
+          # Check if repository exists, if not create it
+          if ! gcloud artifacts repositories describe $REPOSITORY --location=$REGION 2>/dev/null; then
+            echo "Creating Artifact Registry repository $REPOSITORY in $REGION"
+            gcloud artifacts repositories create $REPOSITORY \
+              --repository-format=docker \
+              --location=$REGION \
+              --description="Docker repository for $SERVICE_NAME"
+          else
+            echo "Repository $REPOSITORY already exists"
+          fi
 
       - name: Authorize Docker push
         run: gcloud auth configure-docker $REGION-docker.pkg.dev
