@@ -110,25 +110,32 @@ To update your deployment after making changes to the code:
 
 Cloud Run will automatically route traffic to the new revision once it's ready.
 
-## Setting Environment Variables
+## Setting Environment Variables with GitHub Secrets
 
-After deploying your service, you need to set the required environment variables:
+Instead of configuring environment variables directly in Google Cloud Run, we now use GitHub Secrets to manage environment variables securely:
 
-1. **Using the Google Cloud Console:**
-   - Go to the [Cloud Run console](https://console.cloud.google.com/run)
-   - Click on your service (moxalise-api)
-   - Go to the "Variables & Secrets" tab
-   - Click "Edit and deploy new revision"
-   - Add the environment variable:
-     - Name: `GOOGLE_SHEETS_SPREADSHEET_ID`
-     - Value: Your Google Spreadsheet ID
-   - Click "Deploy"
+1. **Add Required Secrets to GitHub:**
+   - Go to your GitHub repository
+   - Navigate to Settings > Secrets and variables > Actions
+   - Click "New repository secret"
+   - Add the following secrets:
+     - `GCP_PROJECT_ID`: Your Google Cloud project ID
+     - `GCP_SA_KEY`: Your service account key (JSON)
+     - `GOOGLE_SHEETS_SPREADSHEET_ID`: The ID of your Google Spreadsheet
+     - `CORS_ORIGINS`: Allowed CORS origins (comma-separated)
+     - `IP_HASH_SALT`: Salt used for hashing IP addresses
 
-2. **Using gcloud CLI:**
-   ```bash
-   gcloud run services update moxalise-api \
-     --region=europe-west3 \
-     --set-env-vars="GOOGLE_SHEETS_SPREADSHEET_ID=your-spreadsheet-id"
-   ```
+2. **GitHub Actions Workflow:**
+   - The GitHub Actions workflows in `.github/workflows/` automatically use these secrets
+   - When you push to the main/master branch, the deploy workflow will:
+     - Authenticate to Google Cloud using the `GCP_SA_KEY`
+     - Deploy to Cloud Run with the environment variables from GitHub Secrets
+     - Set up the Cloud Run Job with the same environment variables
 
-This will create a new revision of your service with the updated environment variables.
+3. **Benefits of Using GitHub Secrets:**
+   - Improved security: Sensitive information is encrypted and never exposed in plain text
+   - Version control: Environment configuration is tied to code deployment
+   - Consistency: Same environment variables are used across all environments
+   - Simplified management: Environment variables are managed in one place
+
+For more details on GitHub Actions configuration, see [GITHUB_ACTIONS.md](GITHUB_ACTIONS.md).

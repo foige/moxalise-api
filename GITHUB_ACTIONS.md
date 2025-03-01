@@ -61,6 +61,9 @@ In your GitHub repository:
 2. Add the following secrets:
    - `GCP_PROJECT_ID`: Your Google Cloud project ID
    - `GCP_SA_KEY`: The entire content of the `key.json` file (including all curly braces and quotes)
+   - `GOOGLE_SHEETS_SPREADSHEET_ID`: The ID of your Google Spreadsheet
+   - `CORS_ORIGINS`: Allowed CORS origins (comma-separated)
+   - `IP_HASH_SALT`: Salt used for hashing IP addresses
 
 ### 4. Configure Runtime Service Account Permissions
 
@@ -87,7 +90,30 @@ After the first deployment, set the required environment variables in the Cloud 
 5. Add the environment variables from your `.env` file
 6. Click "Deploy"
 
-## How It Works
+## GitHub Actions Workflows
+
+### CI Workflow (ci.yml)
+
+The CI workflow is responsible for running tests to ensure code quality:
+
+1. **When it runs:**
+   - Automatically on all pull requests to `main` or `master` branches
+   - Automatically on all pushes to `main` or `master` branches
+
+2. **What it does:**
+   - Checks out the code repository
+   - Sets up Python with the correct version
+   - Installs project dependencies using Poetry
+   - Sets up Google Cloud credentials for accessing Google Sheets API
+   - Runs tests using pytest
+
+3. **Benefits:**
+   - Ensures all code changes in pull requests are automatically tested before merging
+   - Catches issues early in the development process
+   - Maintains code quality standards
+   - Provides feedback to developers before code review
+
+### Deployment Workflows
 
 The GitHub Actions workflows handle two deployment processes:
 

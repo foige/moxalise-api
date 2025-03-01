@@ -52,6 +52,8 @@ cp .env.example .env
 
 6. Update the `GOOGLE_SHEETS_SPREADSHEET_ID` in your `.env` file with the ID of your Google Spreadsheet.
 
+> **Note on Production Deployment:** For production deployments, environment variables are managed using GitHub Secrets rather than being configured directly in Google Cloud. See [DEPLOY.md](DEPLOY.md) and [GITHUB_ACTIONS.md](GITHUB_ACTIONS.md) for details on configuring GitHub Secrets for deployment.
+
 ## Running the Application
 
 Start the development server:
