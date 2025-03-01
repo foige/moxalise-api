@@ -17,21 +17,25 @@ Before setting up GitHub Actions deployment, ensure you have:
 Create a service account in Google Cloud that GitHub Actions will use to deploy your application:
 
 ```bash
+# Set your project ID as a variable (replace with your actual project ID)
+export PROJECT_ID="your-project-id"
+
 # Create a new service account
 gcloud iam service-accounts create github-actions-deployer \
   --display-name="GitHub Actions Deployer"
 
 # Grant necessary permissions to the service account
-gcloud projects add-iam-policy-binding YOUR_PROJECT_ID \
-  --member="serviceAccount:github-actions-deployer@YOUR_PROJECT_ID.iam.gserviceaccount.com" \
+# Note: Make sure to wait a few seconds after creating the service account before adding permissions
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+  --member="serviceAccount:github-actions-deployer@$PROJECT_ID.iam.gserviceaccount.com" \
   --role="roles/run.admin"
 
-gcloud projects add-iam-policy-binding YOUR_PROJECT_ID \
-  --member="serviceAccount:github-actions-deployer@YOUR_PROJECT_ID.iam.gserviceaccount.com" \
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+  --member="serviceAccount:github-actions-deployer@$PROJECT_ID.iam.gserviceaccount.com" \
   --role="roles/storage.admin"
 
-gcloud projects add-iam-policy-binding YOUR_PROJECT_ID \
-  --member="serviceAccount:github-actions-deployer@YOUR_PROJECT_ID.iam.gserviceaccount.com" \
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+  --member="serviceAccount:github-actions-deployer@$PROJECT_ID.iam.gserviceaccount.com" \
   --role="roles/iam.serviceAccountUser"
 ```
 
@@ -39,7 +43,7 @@ gcloud projects add-iam-policy-binding YOUR_PROJECT_ID \
 
 ```bash
 gcloud iam service-accounts keys create key.json \
-  --iam-account=github-actions-deployer@YOUR_PROJECT_ID.iam.gserviceaccount.com
+  --iam-account=github-actions-deployer@$PROJECT_ID.iam.gserviceaccount.com
 ```
 
 This will download a file named `key.json` containing the service account credentials.
@@ -62,7 +66,7 @@ The Cloud Run service will use the default compute service account. Make sure it
 SERVICE_ACCOUNT=$(gcloud iam service-accounts list --filter="name:compute@developer.gserviceaccount.com" --format="value(email)")
 
 # Grant the service account permission to access Google Sheets
-gcloud projects add-iam-policy-binding YOUR_PROJECT_ID \
+gcloud projects add-iam-policy-binding $PROJECT_ID \
   --member="serviceAccount:$SERVICE_ACCOUNT" \
   --role="roles/sheets.editor"
 ```
@@ -83,9 +87,17 @@ After the first deployment, set the required environment variables in the Cloud 
 The GitHub Actions workflow will:
 
 1. Trigger automatically when you push to the `master` branch
-2. Build a Docker image of your application
-3. Push the image to Google Container Registry
-4. Deploy the image to Google Cloud Run
+2. Authenticate with Google Cloud using the service account key
+3. Build a Docker image of your application
+4. Push the image to Google Container Registry
+5. Deploy the image to Google Cloud Run
+
+### Authentication Flow
+
+The workflow uses two GitHub Actions for Google Cloud authentication:
+
+1. `google-github-actions/auth@v1`: Authenticates with Google Cloud using the service account key
+2. `google-github-actions/setup-gcloud@v1`: Sets up the Google Cloud SDK with the authenticated credentials
 
 You can also manually trigger the workflow from the "Actions" tab in your GitHub repository.
 
