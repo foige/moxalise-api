@@ -9,12 +9,14 @@ on:
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   SERVICE_NAME: moxalise-api
+  JOB_NAME: moxalise-data-transfer
+  SCHEDULER_NAME: moxalise-data-transfer-scheduler
   REGION: europe-west3
   REPOSITORY: moxalise-api
 
 jobs:
   deploy:
-    name: Deploy to Cloud Run
+    name: Deploy to Cloud Run and Schedule Jobs
     runs-on: ubuntu-latest
 
     steps:
@@ -31,6 +33,9 @@ jobs:
         uses: google-github-actions/setup-gcloud@v1
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
+          
+      - name: Install gcloud beta components
+        run: gcloud components install beta --quiet
           
       - name: Create Artifact Registry Repository
         run: |
@@ -64,3 +69,37 @@ jobs:
       - name: Show deployed service URL
         run: |
           echo "Service URL: $(gcloud run services describe $SERVICE_NAME --platform managed --region $REGION --format 'value(status.url)')"
+      
+      - name: Deploy to Cloud Run Jobs
+        run: |
+          # Deploy (create or update) the Cloud Run job
+          gcloud beta run jobs deploy $JOB_NAME \
+            --image $REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$SERVICE_NAME:${{ github.sha }} \
+            --region $REGION \
+            --set-env-vars=JOB_NAME=transfer_data \
+            --memory=1Gi \
+            --cpu=1 \
+            --max-retries=3 \
+            --task-timeout=5m \
+            --parallelism=1
+
+      - name: Update Cloud Scheduler Job
+        run: |
+          # Check if scheduler job exists, delete if it does
+          if gcloud scheduler jobs describe $SCHEDULER_NAME --location=$REGION 2>/dev/null; then
+            echo "Scheduler job exists, deleting"
+            gcloud scheduler jobs delete $SCHEDULER_NAME --location=$REGION --quiet
+          fi
+          
+          # Get the project number using gcloud
+          PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format='value(projectNumber)')
+          
+          # Create Cloud Scheduler job
+          gcloud scheduler jobs create http $SCHEDULER_NAME \
+            --schedule="*/5 * * * *" \
+            --location=$REGION \
+            --uri="https://$REGION-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/$PROJECT_ID/jobs/$JOB_NAME:run" \
+            --http-method=POST \
+            --oauth-service-account-email=$PROJECT_NUMBER-compute@developer.gserviceaccount.com \
+            --oauth-token-scope=https://www.googleapis.com/auth/cloud-platform \
+            --attempt-deadline=4m30s
