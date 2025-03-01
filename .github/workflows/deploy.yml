@@ -10,6 +10,7 @@ env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   SERVICE_NAME: moxalise-api
   REGION: europe-west3
+  REPOSITORY: moxalise-api
 
 jobs:
   deploy:
@@ -32,17 +33,17 @@ jobs:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
 
       - name: Authorize Docker push
-        run: gcloud auth configure-docker
+        run: gcloud auth configure-docker $REGION-docker.pkg.dev
 
       - name: Build and push Docker image
         run: |
-          docker build --platform linux/amd64 -t gcr.io/$PROJECT_ID/$SERVICE_NAME:${{ github.sha }} .
-          docker push gcr.io/$PROJECT_ID/$SERVICE_NAME:${{ github.sha }}
+          docker build --platform linux/amd64 -t $REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$SERVICE_NAME:${{ github.sha }} .
+          docker push $REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$SERVICE_NAME:${{ github.sha }}
 
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy $SERVICE_NAME \
-            --image gcr.io/$PROJECT_ID/$SERVICE_NAME:${{ github.sha }} \
+            --image $REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$SERVICE_NAME:${{ github.sha }} \
             --platform managed \
             --region $REGION \
             --allow-unauthenticated
