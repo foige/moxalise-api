@@ -291,7 +291,7 @@ def process_spreadsheet_data():
         logger.info(f"Connected to Google Sheets service")
         
         # Get all data from source sheet
-        source_range = SheetRange(sheet_name=SOURCE_SHEET, start_cell="A1", end_cell="Z1000")
+        source_range = SheetRange(sheet_name=SOURCE_SHEET, start_cell="A1", end_cell="Z100000")
         source_data = service.get_sheet_data(source_range)
         
         if not source_data.values:
@@ -306,7 +306,7 @@ def process_spreadsheet_data():
         original_source_headers = source_headers.copy()
         
         # Get all data from target sheet
-        target_range = SheetRange(sheet_name=TARGET_SHEET, start_cell="A1", end_cell="Z1000")
+        target_range = SheetRange(sheet_name=TARGET_SHEET, start_cell="A1", end_cell="Z100000")
         target_data = service.get_sheet_data(target_range)
         
         if not target_data.values:
