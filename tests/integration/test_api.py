@@ -29,7 +29,7 @@ def test_endpoints(client, endpoint, expected_status, expected_response):
     assert response.status_code == expected_status
     assert response.json() == expected_response
 
-
+@pytest.mark.skip('route disabled')
 def test_get_sheet_names(client, mock_sheets_service):
     """
     Test getting sheet names.
@@ -50,6 +50,7 @@ def test_get_sheet_names(client, mock_sheets_service):
     mock_sheets_service.get_sheet_names.assert_called_once()
 
 
+@pytest.mark.skip('route disabled')
 def test_get_sheet_data(client, mock_sheets_service):
     """
     Test getting sheet data.

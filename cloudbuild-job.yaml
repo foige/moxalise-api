@@ -1,0 +1,58 @@
+# Cloud Run Job configuration for Moxalise data transfer
+steps:
+  # Build the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE}:${_TAG}', '.']
+
+  # Push the container image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE}:${_TAG}']
+
+  # Deploy Cloud Run job with concurrency=1 to prevent multiple instances
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'jobs'
+      - 'create'
+      - '${_JOB_NAME}'
+      - '--image=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE}:${_TAG}'
+      - '--region=${_REGION}'
+      - '--set-env-vars=JOB_NAME=transfer_data'
+      - '--set-env-vars=GOOGLE_SHEETS_SPREADSHEET_ID=${_SPREADSHEET_ID}'
+      - '--memory=1Gi'
+      - '--cpu=1'
+      - '--max-retries=3'
+      - '--task-timeout=5m'
+      - '--max-instances=1'  # Only one instance can run at a time
+      - '--execute-now=false'  # Don't execute immediately after creation
+
+  # Create Cloud Scheduler job to run every 5 minutes with attempt-deadline
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'scheduler'
+      - 'jobs'
+      - 'create'
+      - 'http'
+      - '${_SCHEDULER_NAME}'
+      - '--schedule=*/5 * * * *'
+      - '--location=${_REGION}'
+      - '--uri=https://${_REGION}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${PROJECT_ID}/jobs/${_JOB_NAME}:run'
+      - '--http-method=POST'
+      - '--oauth-service-account-email=${PROJECT_ID}@appspot.gserviceaccount.com'
+      - '--oauth-token-scope=https://www.googleapis.com/auth/cloud-platform'
+      - '--attempt-deadline=4m30s'  # Shorter than the task-timeout
+
+# Substitution variables with defaults
+substitutions:
+  _REGION: 'europe-west1'
+  _REPOSITORY: 'moxalise-containers'
+  _IMAGE: 'moxalise-api'
+  _TAG: 'latest'
+  _JOB_NAME: 'moxalise-data-transfer'
+  _SCHEDULER_NAME: 'moxalise-data-transfer-scheduler'
+  _SPREADSHEET_ID: ''  # This needs to be provided when running the build
+
+images:
+  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE}:${_TAG}'

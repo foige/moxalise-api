@@ -4,7 +4,7 @@ Google Sheets service for interacting with Google Sheets API.
 This module provides a service for interacting with Google Sheets API,
 including authentication and operations like reading, updating, and appending data.
 """
-from typing import List, Optional
+from typing import Dict, List, Optional, Any
 
 from google.auth import default
 from googleapiclient.discovery import build
@@ -129,6 +129,55 @@ class GoogleSheetsService:
         except HttpError as error:
             raise HttpError(
                 error.resp, error.content, f"Failed to update sheet data: {str(error)}"
+            )
+            
+    def batch_update_sheet_data(self, data: Dict[str, List[List[Any]]], value_input_option: str = "USER_ENTERED") -> Dict[str, int]:
+        """
+        Update multiple ranges in a sheet in a single batch request.
+        
+        Args:
+            data: A dictionary mapping range in A1 notation to values.
+            value_input_option: How the input should be interpreted.
+            
+        Returns:
+            Dict[str, int]: A dictionary mapping the range to the number of cells updated.
+            
+        Raises:
+            HttpError: If the API request fails.
+        """
+        try:
+            batch_data = {
+                "valueInputOption": value_input_option,
+                "data": [
+                    {
+                        "range": range_a1,
+                        "values": values
+                    }
+                    for range_a1, values in data.items()
+                ]
+            }
+            
+            result = (
+                self.service.spreadsheets()
+                .values()
+                .batchUpdate(
+                    spreadsheetId=self.spreadsheet_id,
+                    body=batch_data,
+                )
+                .execute()
+            )
+            
+            # Process the response
+            updated_ranges = {}
+            for response in result.get("responses", []):
+                updated_range = response.get("updatedRange", "")
+                updated_cells = response.get("updatedCells", 0)
+                updated_ranges[updated_range] = updated_cells
+                
+            return updated_ranges
+        except HttpError as error:
+            raise HttpError(
+                error.resp, error.content, f"Failed to batch update sheet data: {str(error)}"
             )
 
     def append_sheet_data(self, request: SheetAppendRequest) -> SheetAppendResponse:
