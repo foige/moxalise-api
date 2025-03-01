@@ -38,7 +38,8 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     
     # CORS settings
-    CORS_ORIGINS: List[str] = []  # Default to empty list
+    # Use Any type to allow accepting raw * character before validation
+    CORS_ORIGINS: List[str] | str = []  # Default to empty list
 
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
@@ -52,9 +53,11 @@ class Settings(BaseSettings):
         Returns:
             List[str]: The validated CORS origins.
         """
+        # Special case for GitHub Actions and other environments where * might be passed literally
+        if v == "*" or (isinstance(v, str) and v.strip() == "*"):
+            return ["*"]
+        
         if isinstance(v, str):
-            if v == "*":
-                return ["*"]
             if "," in v:
                 return [origin.strip() for origin in v.split(",") if origin.strip()]
             return [v]
