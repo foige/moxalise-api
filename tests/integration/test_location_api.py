@@ -56,7 +56,7 @@ def test_store_location(mock_hash_ip, client, mock_sheets_service):
     args, _ = mock_sheets_service.append_sheet_data.call_args
     append_request = args[0]
     assert isinstance(append_request, SheetAppendRequest)
-    assert append_request.range.sheet_name == "მოხალისეთა კოორდინატები"
+    assert append_request.range.sheet_name == "gps_logs"
     
     # Verify that the IP address was hashed
     mock_hash_ip.assert_called_once()

@@ -27,7 +27,7 @@ async def store_location(
     Store browser geolocation data.
 
     This endpoint receives geolocation data from the browser and stores it
-    in the 'მოხალისეთა კოორდინატები' Google Sheet for further analysis.
+    in the 'gps_logs' Google Sheet for further analysis.
     All string inputs are sanitized to prevent XSS and other injection attacks.
 
     Args:
@@ -79,9 +79,9 @@ async def store_location(
             location_data.ip_address
         ]]
 
-        # Append to the "მოხალისეთა კოორდინატები" sheet, starting from cell A1, with a range of 3000
+        # Append to the "gps_logs" sheet, starting from cell A1, with a range of 3000
         append_request = SheetAppendRequest(
-            range=SheetRange(sheet_name="მოხალისეთა კოორდინატები", start_cell="A1", end_cell="L3000"),
+            range=SheetRange(sheet_name="gps_logs", start_cell="A1", end_cell="L3000"),
             values=values,
             value_input_option="USER_ENTERED"
         )
