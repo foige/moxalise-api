@@ -49,8 +49,13 @@ async def store_location(
         user_agent = request.headers.get("user-agent")
         location_data.user_agent = sanitize_object(user_agent)
         
-        # Get the IP address and hash it before storing
-        ip_address = request.client.host if request.client else None
+        ip_address = None
+        forwarded_for = request.headers.get("X-Forwarded-For")
+        if forwarded_for:
+            ip_address = forwarded_for.split(",")[0].strip()
+        else:
+            ip_address = request.client.host if request.client else None
+        
         location_data.ip_address = hash_ip_address(ip_address)
         
         # Generate timestamp on server in GMT+4 timezone
