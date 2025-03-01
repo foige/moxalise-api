@@ -245,14 +245,34 @@ def generate_row_id(
     if existing_id:
         return existing_id
     
-    # Generate unique ID
-    timestamp = row[source_indices.get("timestamp", 0)] if len(row) > source_indices.get("timestamp", 0) else ""
+    # Get all relevant data
     name = row[source_indices.get("name", 1)] if len(row) > source_indices.get("name", 1) else ""
     district = row[source_indices.get("district", 2)] if len(row) > source_indices.get("district", 2) else ""
     village = row[source_indices.get("village", 3)] if len(row) > source_indices.get("village", 3) else ""
+    phone = row[source_indices.get("phone", 0)] if "phone" in source_indices and len(row) > source_indices["phone"] else ""
+    exact_location = row[source_indices.get("exact_location", 0)] if "exact_location" in source_indices and len(row) > source_indices["exact_location"] else ""
+    timestamp = row[source_indices.get("timestamp", 0)] if len(row) > source_indices.get("timestamp", 0) else ""
+    
+    # Create hash data: include phone and exact_location if they exist, only include timestamp if neither exist
+    hash_components = []
+    
+    # Always include these basic identifiers
+    hash_components.append(name)
+    hash_components.append(district)
+    hash_components.append(village)
+    
+    # Include phone and/or exact_location if they exist
+    if phone:
+        hash_components.append(phone)
+    if exact_location:
+        hash_components.append(exact_location)
+    
+    # Only include timestamp if neither phone nor exact_location exist
+    if not phone and not exact_location and timestamp:
+        hash_components.append(timestamp)
     
     # Create hash from combined data
-    hash_data = f"{timestamp}|{name}|{district}|{village}"
+    hash_data = "|".join(hash_components)
     return create_short_hash(hash_data)
 
 def process_spreadsheet_data():
@@ -363,26 +383,16 @@ def process_spreadsheet_data():
                     execute_batch_operations()  # Make sure to process any pending operations
                     break
             
-            # Check if we have a row ID or need to generate one
-            existing_id = ""
+            # Check if the row already has an ID
+            had_existing_id = False
             if "id" in source_indices and len(row) > source_indices["id"]:
-                existing_id = row[source_indices["id"]]
+                had_existing_id = bool(row[source_indices["id"]])
             
-            # Generate ID if needed
-            unique_id = existing_id
-            if not existing_id:
-                # Generate unique ID
-                timestamp = row[source_indices.get("timestamp", 0)] if len(row) > source_indices.get("timestamp", 0) else ""
-                name = row[source_indices.get("name", 1)] if len(row) > source_indices.get("name", 1) else ""
-                district = row[source_indices.get("district", 2)] if len(row) > source_indices.get("district", 2) else ""
-                village = row[source_indices.get("village", 3)] if len(row) > source_indices.get("village", 3) else ""
-                
-                # Create hash from combined data
-                hash_data = f"{timestamp}|{name}|{district}|{village}"
-                unique_id = create_short_hash(hash_data)
-                
-                # Add to batch update for IDs
-                if "id" in source_indices:
+            # Get or generate a unique ID for the row (using the updated generate_row_id function)
+            unique_id = generate_row_id(row, source_indices)
+            
+            # If the row didn't have an ID before, add the new one to the batch update
+            if "id" in source_indices and not had_existing_id:
                     id_col_letter = chr(65 + source_indices["id"])  # Convert index to column letter (A, B, C, etc.)
                     id_cell = f"'{SOURCE_SHEET}'!{id_col_letter}{i+1}"
                     ids_to_add[id_cell] = [[unique_id]]
