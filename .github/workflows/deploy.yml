@@ -64,7 +64,11 @@ jobs:
             --image $REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$SERVICE_NAME:${{ github.sha }} \
             --platform managed \
             --region $REGION \
-            --allow-unauthenticated
+            --allow-unauthenticated \
+            --set-env-vars="\
+              GOOGLE_SHEETS_SPREADSHEET_ID=${{ secrets.GOOGLE_SHEETS_SPREADSHEET_ID }},\
+              CORS_ORIGINS=${{ secrets.CORS_ORIGINS }},\
+              IP_HASH_SALT=${{ secrets.IP_HASH_SALT }}"
 
       - name: Show deployed service URL
         run: |
@@ -76,7 +80,11 @@ jobs:
           gcloud beta run jobs deploy $JOB_NAME \
             --image $REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$SERVICE_NAME:${{ github.sha }} \
             --region $REGION \
-            --set-env-vars=JOB_NAME=transfer_data \
+            --set-env-vars="\
+              JOB_NAME=transfer_data,\
+              GOOGLE_SHEETS_SPREADSHEET_ID=${{ secrets.GOOGLE_SHEETS_SPREADSHEET_ID }},\
+              CORS_ORIGINS=${{ secrets.CORS_ORIGINS }},\
+              IP_HASH_SALT=${{ secrets.IP_HASH_SALT }}" \
             --memory=1Gi \
             --cpu=1 \
             --max-retries=3 \
