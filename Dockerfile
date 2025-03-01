@@ -20,6 +20,10 @@ COPY pyproject.toml poetry.lock* ./
 # Install dependencies
 RUN poetry install --no-dev --no-interaction --no-ansi
 
+# Copy entrypoint script first
+COPY entrypoint.sh ./
+RUN chmod +x /app/entrypoint.sh
+
 # Copy application code
 COPY . .
 
@@ -29,5 +33,5 @@ RUN poetry install --no-interaction --no-ansi --only-root
 # Expose port
 EXPOSE 8080
 
-# Command to run the application
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+# Use entrypoint script to decide whether to run a job or start the server
+ENTRYPOINT ["/app/entrypoint.sh"]
