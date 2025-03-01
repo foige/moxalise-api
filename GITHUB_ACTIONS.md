@@ -89,7 +89,11 @@ After the first deployment, set the required environment variables in the Cloud 
 
 ## How It Works
 
-The GitHub Actions workflow will:
+The GitHub Actions workflows handle two deployment processes:
+
+### Main Service Deployment
+
+The main deployment workflow (`deploy.yml`) will:
 
 1. Trigger automatically when you push to the `master` branch
 2. Authenticate with Google Cloud using the service account key
@@ -98,14 +102,24 @@ The GitHub Actions workflow will:
 5. Push the image to Artifact Registry (europe-west3-docker.pkg.dev)
 6. Deploy the image to Google Cloud Run
 
+### Job Deployment
+
+The job deployment workflow (`deploy-job.yml`) will:
+
+1. Trigger automatically after the main deployment workflow completes successfully
+2. Deploy a Cloud Run job using the same Docker image that was built by the main workflow
+3. Set up a Cloud Scheduler job to run the Cloud Run job on a regular schedule (every 5 minutes)
+
+This ensures that both the service and the scheduled jobs use the same codebase and configuration.
+
 ### Authentication Flow
 
-The workflow uses two GitHub Actions for Google Cloud authentication:
+Both workflows use the same GitHub Actions for Google Cloud authentication:
 
 1. `google-github-actions/auth@v1`: Authenticates with Google Cloud using the service account key
 2. `google-github-actions/setup-gcloud@v1`: Sets up the Google Cloud SDK with the authenticated credentials
 
-You can also manually trigger the workflow from the "Actions" tab in your GitHub repository.
+You can also manually trigger either workflow from the "Actions" tab in your GitHub repository.
 
 ## Troubleshooting
 
