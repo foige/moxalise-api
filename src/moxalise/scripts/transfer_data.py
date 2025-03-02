@@ -338,24 +338,13 @@ def process_spreadsheet_data():
             
             # Handle batch append
             if rows_to_append:
-                # Find the last empty row in the target sheet
-                last_empty_row = 2  # Default to A2 (after header) if we can't find empty rows
+                # Get the next row after the last data row (length of values = number of rows including header)
+                next_row = len(target_data.values) + 1
                 
-                # Skip header row (index 0)
-                for i in range(1, len(target_data.values)):
-                    row = target_data.values[i]
-                    # Check if row is empty or contains only empty strings
-                    if not row or all(cell == "" for cell in row):
-                        last_empty_row = i + 1  # Convert to 1-based row number
-                        break
-                    # If we're at the last row, set to append after it
-                    if i == len(target_data.values) - 1:
-                        last_empty_row = i + 2  # Next row after the last
-                
-                logger.info(f"Found last empty row at row {last_empty_row}")
+                logger.info(f"Appending at row {next_row}")
                 
                 append_request = SheetAppendRequest(
-                    range=SheetRange(sheet_name=TARGET_SHEET, start_cell=f"A{last_empty_row}"),
+                    range=SheetRange(sheet_name=TARGET_SHEET, start_cell=f"A{next_row}"),
                     values=rows_to_append,
                     value_input_option="USER_ENTERED"
                 )
